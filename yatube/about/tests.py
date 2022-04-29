@@ -9,8 +9,8 @@ class StaticPagesURLTests(TestCase):
 
     def test_about_urls_exists_at_desired_locations(self):
         url_names = (
-                '/about/author/',
-                '/about/tech/'
+            '/about/author/',
+            '/about/tech/'
         )
         for address in url_names:
             with self.subTest():

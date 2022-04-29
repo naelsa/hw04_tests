@@ -30,4 +30,3 @@ class PostModelTest(TestCase):
         group = PostModelTest.group
         expected_object_name = group.title
         self.assertEqual(expected_object_name, str(group))
-

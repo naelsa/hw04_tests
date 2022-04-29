@@ -38,7 +38,7 @@ class PostPagesTests(TestCase):
                 reverse('posts:group_list',
                         kwargs={'slug': 'test_slug'})
             ),
-            'posts/profile.html':  (
+            'posts/profile.html': (
                 reverse('posts:profile',
                         kwargs={'username': 'test_user'})
             ),
@@ -102,7 +102,10 @@ class PostPagesTests(TestCase):
     def test_post_detail_show_correct_context(self):
         """Шаблон просмотра поста сформирован с правильным контекстом."""
         response = self.authorized_client.get(
-            reverse('posts:post_detail', kwargs={'post_id': f'{self.post.id}'}))
+            reverse(
+                'posts:post_detail', kwargs={'post_id': f'{self.post.id}'}
+            )
+        )
         first_object = response.context['post']
         post_text_0 = first_object.text
         post_author_0 = first_object.author.username
@@ -146,10 +149,10 @@ class PaginatorViewsTest(TestCase):
             slug='test_slug2',
             description='Тестовое описание2')
         cls.posts = [Post(
-                text=f'Тестовый пост {i}',
-                author=cls.author,
-                group=cls.group
-            ) for i in range(13)]
+            text=f'Тестовый пост {i}',
+            author=cls.author,
+            group=cls.group
+        ) for i in range(13)]
         Post.objects.bulk_create(cls.posts)
 
     def setUp(self):
