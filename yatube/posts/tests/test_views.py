@@ -29,33 +29,26 @@ class PostPagesTests(TestCase):
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
 
-    def test_pages_uses_correct_template(self):
+    def test_pages_uses_correct_namespace(self):
         """URL-адрес использует соответствующий шаблон."""
 
         templates_pages_names = {
-            'posts/index.html': reverse('posts:index'),
-            'posts/group_list.html': (
-                reverse('posts:group_list',
-                        kwargs={'slug': 'test_slug'})
-            ),
-            'posts/profile.html': (
-                reverse('posts:profile',
-                        kwargs={'username': 'test_user'})
-            ),
-            'posts/post_detail.html': (
-                reverse('posts:post_detail',
-                        kwargs={'post_id': f'{self.post.id}'})
-            ),
-            'posts/create_post.html': reverse('posts:post_create'),
-            'posts/create_post.html': (
-                reverse('posts:post_edit',
-                        kwargs={'post_id': f'{self.post.id}'})
-            ),
-
+            reverse('posts:index'):
+                'posts/index.html',
+            reverse('posts:group_list', kwargs={'slug': 'test_slug'}):
+                'posts/group_list.html',
+            reverse('posts:profile', kwargs={'username': 'test_user'}):
+                'posts/profile.html',
+            reverse('posts:post_detail', kwargs={'post_id': f'{self.post.id}'}):
+                'posts/post_detail.html',
+            reverse('posts:post_create'):
+                'posts/create_post.html',
+            reverse('posts:post_edit', kwargs={'post_id': f'{self.post.id}'}):
+                'posts/create_post.html',
         }
 
-        for template, reverse_name in templates_pages_names.items():
-            with self.subTest(reverse_name=reverse_name):
+        for reverse_name, template in templates_pages_names.items():
+            with self.subTest(template=template):
                 response = self.authorized_client.get(reverse_name)
                 self.assertTemplateUsed(response, template)
 
@@ -70,8 +63,7 @@ class PostPagesTests(TestCase):
         self.assertEqual(post_author_0, 'test_user')
 
     def test_group_pages_show_correct_context(self):
-        """Шаблон группы сформирован с правильным контекстом,
-        созданный."""
+        """Шаблон группы сформирован с правильным контекстом."""
         response = self.authorized_client.get(
             reverse('posts:group_list', kwargs={'slug': 'test_slug'})
         )
@@ -162,6 +154,7 @@ class PaginatorViewsTest(TestCase):
         self.authorized_client.force_login(self.user)
 
     def test_first_page_contains_ten_posts(self):
+        """Первая страница содержит 10 постов."""
         list_urls = (
             reverse('posts:index'),
             reverse('posts:group_list', kwargs={"slug": "test_slug2"}),
@@ -173,6 +166,7 @@ class PaginatorViewsTest(TestCase):
                 len(response.context['page_obj']), 10)
 
     def test_second_page_contains_three_posts(self):
+        """Вторая страница содержит 3 поста."""
         list_urls = (
             reverse('posts:index') + '?page=2',
             reverse(
