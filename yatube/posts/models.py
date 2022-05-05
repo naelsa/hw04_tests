@@ -29,7 +29,8 @@ class Group(models.Model):
 class Post(models.Model):
 
     text = models.TextField(
-        'Текст'
+        'Текст',
+        help_text='Напишите текст поста'
     )
     pub_date = models.DateTimeField(
         'Дата публикации',
@@ -47,7 +48,8 @@ class Post(models.Model):
         null=True,
         on_delete=models.SET_NULL,
         related_name='posts',
-        verbose_name='Группа'
+        verbose_name='Группа',
+        help_text='Группа, к которой относится запись'
     )
 
     class Meta:

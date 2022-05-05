@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
@@ -8,7 +10,7 @@ from ..models import Group, Post
 User = get_user_model()
 
 
-class PostCreateFormTests(TestCase):
+class PostFormTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -31,60 +33,95 @@ class PostCreateFormTests(TestCase):
         cls.form = PostForm()
 
     def setUp(self):
-        self.authorized_client = Client()
-        self.authorized_client.force_login(self.author)
+        self.author_client = Client()
+        self.author_client.force_login(self.author)
 
-    def test_create_post(self):
+    def test_auth_create_post(self):
         """Валидная форма создает запись в Post."""
         posts_count = Post.objects.count()
         form_data = {
-            'text': f'{self.post.text}',
-            'group': f'{self.group.id}'
+            'text': 'Тест поста',
+            'group': self.group.id
         }
-        response = self.authorized_client.post(
+        response = self.author_client.post(
             reverse('posts:post_create'),
             data=form_data,
             follow=True
         )
         self.assertRedirects(
-            response, reverse('posts:profile',
-                              kwargs={'username': f'{self.author}'})
+            response, reverse('posts:profile', args=(self.author,))
         )
         self.assertEqual(Post.objects.count(), posts_count + 1)
         self.assertTrue(
             Post.objects.filter(
                 group=self.group.id,
-                text=self.post.text
+                text='Тест поста'
             ).exists()
         )
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
-    def test_edit_post(self):
+        post = Post.objects.first()
+
+        self.assertEqual(post.text, form_data['text'])
+        self.assertEqual(post.author, self.author)
+        self.assertEqual(post.group, self.group)
+
+    def test_guest_create_post(self):
         """Валидная форма создает запись в Post."""
+        posts_count = Post.objects.count()
         form_data = {
-            'text': 'Тестовый текст',
-            'group': f'{self.group2.id}'
+            'text': 'Тест поста',
+            'group': self.group.id
         }
-        response = self.authorized_client.post(
-            reverse('posts:post_edit',
-                    kwargs={'post_id': f'{self.post.id}'}
-                    ),
+        response = self.client.post(
+            reverse('posts:post_create'),
             data=form_data,
             follow=True
         )
         self.assertRedirects(
-            response, reverse('posts:post_detail',
-                              kwargs={'post_id': f'{self.post.id}'}
-                              )
+            response, '/auth/login/?next=/create/'
+        )
+        self.assertFalse(
+            Post.objects.filter(
+                group=self.group.id,
+                text='Тест поста'
+            ).exists()
+        )
+        self.assertEqual(Post.objects.count(), posts_count)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+
+    def test_auth_edit_post(self):
+        """Валидная форма редактирует запись в Post."""
+        posts_count = Post.objects.count()
+        form_data = {
+            'text': 'Тест редактирования',
+            'group': self.group2.id
+        }
+        response = self.author_client.post(
+            reverse('posts:post_edit', args=(self.post.pk,)),
+            data=form_data,
+            follow=True
+        )
+        self.assertRedirects(
+            response, reverse('posts:post_detail', args=(self.post.pk,))
         )
         self.assertTrue(
             Post.objects.filter(
                 group=self.group2.id,
-                text=self.post.text
+                text='Тест редактирования'
             ).exists()
         )
         self.assertFalse(
             Post.objects.filter(
                 group=self.group.id,
-                text=self.post.text
+                text='Тест поста'
             ).exists()
         )
+        self.assertEqual(Post.objects.count(), posts_count)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+
+        post = Post.objects.first()
+
+        self.assertEqual(post.text, form_data['text'])
+        self.assertEqual(post.author, self.author)
+        self.assertEqual(post.group, self.group2)
