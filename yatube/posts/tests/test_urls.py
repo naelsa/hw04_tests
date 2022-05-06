@@ -1,6 +1,6 @@
 from http import HTTPStatus
 
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, REDIRECT_FIELD_NAME
 from django.urls import reverse
 from django.test import TestCase, Client
 
@@ -44,8 +44,8 @@ class PostURLTest(TestCase):
              f'/posts/{self.post.id}/edit/'),
         )
 
-    def test_urls_accessible_for_authorized(self):
-        """Страница доступны авторизованному пользователю."""
+    def test_urls_match(self):
+        """Запрашиваемые URL соответствуют URL из списка."""
         for name, args, url in self.reverse_name:
             with self.subTest():
                 self.assertEqual(reverse(name, args=args), url)
@@ -68,7 +68,10 @@ class PostURLTest(TestCase):
                 )
                 if 'posts:post_edit' in name:
                     self.assertEqual(response.status_code, HTTPStatus.FOUND)
-                    self.assertRedirects(response, f'/posts/{self.post.id}/')
+                    self.assertRedirects(
+                        response, (reverse
+                                   ('posts:post_detail', args=(self.post.id,)))
+                    )
                 else:
                     self.assertEqual(response.status_code, HTTPStatus.OK)
 
@@ -76,22 +79,18 @@ class PostURLTest(TestCase):
         """URL доступны для неавторизованного клиента,
         кроме post_create и post_edit.
         """
+        login_url = reverse('users:login')
         for name, args, _ in self.reverse_name:
             with self.subTest():
                 response = self.client.get(
-                    reverse(viewname=name, args=args)
+                    reverse(viewname=name, args=args),
                 )
-                if 'posts:post_edit' in name:
+                if name in ['posts:post_edit', 'posts:post_create']:
                     self.assertEqual(response.status_code, HTTPStatus.FOUND)
                     self.assertRedirects(
                         response,
-                        f'/auth/login/?next=/posts/{self.post.id}/edit/'
-                    )
-                elif 'posts:post_create' in name:
-                    self.assertEqual(response.status_code, HTTPStatus.FOUND)
-                    self.assertRedirects(
-                        response,
-                        '/auth/login/?next=/create/'
+                        (f'{login_url}?{REDIRECT_FIELD_NAME}='
+                         f'{reverse(viewname=name, args=args)}')
                     )
                 else:
                     self.assertEqual(response.status_code, HTTPStatus.OK)

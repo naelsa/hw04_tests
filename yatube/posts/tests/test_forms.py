@@ -111,12 +111,11 @@ class PostFormTests(TestCase):
                 text='Тест редактирования'
             ).exists()
         )
-        self.assertFalse(
-            Post.objects.filter(
-                group=self.group.id,
-                text='Тест поста'
-            ).exists()
+        group = self.client.get(
+            reverse('posts:group_list', args=(self.group.slug,))
         )
+        self.assertFalse(len(group.context['page_obj']), 0)
+        self.assertEqual(group.status_code, HTTPStatus.OK)
         self.assertEqual(Post.objects.count(), posts_count)
         self.assertEqual(response.status_code, HTTPStatus.OK)
 

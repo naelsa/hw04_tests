@@ -93,10 +93,9 @@ class PostPagesTests(TestCase):
     def test_profile_correct_context(self):
         """Шаблон профиля сформирован с правильным контекстом"""
         response = self.authorized_author.get(
-            reverse('posts:profile', args=(self.author.username,))
+            reverse('posts:profile', args=(self.author,))
         )
-        self.assertEqual(response.context['author'].username,
-                         self.author.username)
+        self.assertEqual(response.context['author'], self.author)
         self.contexts(response)
 
     def test_post_another_group(self):
@@ -118,6 +117,8 @@ class PostPagesTests(TestCase):
 
 
 class PaginatorViewsTest(TestCase):
+    ALL_POSTS_AMOUNT: int = 13
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -126,13 +127,12 @@ class PaginatorViewsTest(TestCase):
             title='Тестовая группа2',
             slug='test_slug2',
             description='Тестовое описание2')
-        cls.all_posts_amount = 13
         cls.posts = [
             Post(
                 text=f'Тестовый пост {num}',
                 author=cls.author,
                 group=cls.group
-            ) for num in range(cls.all_posts_amount)
+            ) for num in range(cls.ALL_POSTS_AMOUNT)
         ]
         Post.objects.bulk_create(cls.posts)
 
@@ -156,7 +156,7 @@ class PaginatorViewsTest(TestCase):
 
     def test_second_page_contains_three_posts(self):
         """Вторая страница содержит 3 поста."""
-        second_page_amount = self.all_posts_amount - settings.POSTS_PER_PAGE
+        second_page_amount = self.ALL_POSTS_AMOUNT - settings.POSTS_PER_PAGE
         for name, args in self.list_urls:
             with self.subTest():
                 response = self.client.get(
