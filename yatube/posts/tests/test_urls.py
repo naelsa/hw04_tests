@@ -1,8 +1,8 @@
 from http import HTTPStatus
 
 from django.contrib.auth import get_user_model, REDIRECT_FIELD_NAME
-from django.urls import reverse
 from django.test import TestCase, Client
+from django.urls import reverse
 
 from ..models import Group, Post
 
@@ -76,8 +76,8 @@ class PostURLTest(TestCase):
                     self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_urls_for_unauthorized(self):
-        """URL доступны для неавторизованного клиента,
-        кроме post_create и post_edit.
+        """post_create и post_edit перенаправляютя на страницу авторизации,
+        остльные URL доступны для неавторизованного клиента.
         """
         login_url = reverse('users:login')
         for name, args, _ in self.reverse_name:

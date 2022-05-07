@@ -86,8 +86,7 @@ class PostPagesTests(TestCase):
         response = self.authorized_author.get(
             reverse('posts:group_list', args=(self.group.slug,))
         )
-        self.assertEqual(response.context['group'],
-                         self.group)
+        self.assertEqual(response.context['group'], self.group)
         self.contexts(response)
 
     def test_profile_correct_context(self):
