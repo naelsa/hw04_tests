@@ -42,6 +42,9 @@ class PostURLTest(TestCase):
             ('posts:post_create', None, '/create/'),
             ('posts:post_edit', (self.post.id,),
              f'/posts/{self.post.id}/edit/'),
+            ('posts:add_comment', (self.post.id,),
+             f'/posts/{self.post.id}/comment/'),
+            ('posts:follow_index', None, '/follow/'),
         )
 
     def test_urls_match(self):
@@ -57,7 +60,10 @@ class PostURLTest(TestCase):
                 response = self.author_client.get(
                     reverse(viewname=name, args=args)
                 )
-                self.assertEqual(response.status_code, HTTPStatus.OK)
+                if name in ['posts:add_comment']:
+                    self.assertEqual(response.status_code, HTTPStatus.FOUND)
+                else:
+                    self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_urls_has_code_200_not_author(self):
         """URL доступны для не автора, кроме post_edit."""
@@ -66,7 +72,7 @@ class PostURLTest(TestCase):
                 response = self.not_author_client.get(
                     reverse(viewname=name, args=args)
                 )
-                if 'posts:post_edit' in name:
+                if name in ['posts:post_edit', 'posts:add_comment']:
                     self.assertEqual(response.status_code, HTTPStatus.FOUND)
                     self.assertRedirects(
                         response, (reverse
@@ -76,8 +82,8 @@ class PostURLTest(TestCase):
                     self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_urls_for_unauthorized(self):
-        """post_create и post_edit перенаправляютя на страницу авторизации,
-        остльные URL доступны для неавторизованного клиента.
+        """post_create, post_edit и add_comment перенаправляютя на страницу
+        авторизации, остльные URL доступны для неавторизованного клиента.
         """
         login_url = reverse('users:login')
         for name, args, _ in self.reverse_name:
@@ -85,7 +91,12 @@ class PostURLTest(TestCase):
                 response = self.client.get(
                     reverse(viewname=name, args=args),
                 )
-                if name in ['posts:post_edit', 'posts:post_create']:
+                if name in [
+                    'posts:post_edit',
+                    'posts:post_create',
+                    'posts:add_comment',
+                    'posts:follow_index'
+                ]:
                     self.assertEqual(response.status_code, HTTPStatus.FOUND)
                     self.assertRedirects(
                         response,

@@ -13,7 +13,7 @@
           </div>
           <div class="card-body">
           {% include 'includes/errors.html' %}
-            <form method="post"
+            <form method="post" enctype="multipart/form-data"
             {% if form.instance.pk %}
               action="{% url 'posts:post_edit' form.instance.pk %}"
             {% else %}
